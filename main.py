@@ -4,6 +4,7 @@ import numpy
 import math
 import os
 import sys
+import imageio.v2 as imageio
 
 def removeGreenScreen(infile,outfile, keyColor = None, tolerance = None):
     #open files
@@ -81,14 +82,14 @@ def frameCapture(path,type):
     count = 0
     # checks whether frames were extracted 
     success = 1
-    global length
+    global length, fps
     if vidObj.isOpened():
         length = int(vidObj.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = vidObj.get(cv2.CAP_PROP_FPS)
         width = vidObj.get(cv2.CAP_PROP_FRAME_WIDTH)   
         height = vidObj.get(cv2.CAP_PROP_FRAME_HEIGHT) 
         writeLog("Frame Width : "+str(width)+"\nFrame Height : "+str(height)+"\nFrame Rate : "+str(fps),"out\\footageInfo.txt")
-        print ("\n" * 100)
+        clear_console()
         while count < length: 
             # vidObj object calls read 
             # function extract frames 
@@ -98,40 +99,55 @@ def frameCapture(path,type):
             print_progress(count, (length-1), prefix='Creating Image Sequence', suffix="[ Frame : "+ str(count).zfill(6) +" ]", decimals=1, bar_length=50)
             count += 1
 
-def genOutput():
-    global length
+def genOutput(footage):
+    global length, fps
     count = 0
-    print ("\n" * 100)
+    clear_console()
+    images = []
     for file in [file for file in os.listdir("imgseq\\footage\\") if file.endswith('.png')]:
         removeGreenScreen("imgseq\\footage\\"+str(file),"out\\"+str(file))
-        print_progress(count, (length-1), prefix='Generating Output Files', suffix="[ File : "+str(file)+" ]", decimals=1, bar_length=50)
+        print_progress(count, (length-1), prefix='Generating Frames', suffix="[ File : "+str(file)+" ]", decimals=1, bar_length=50)
         count += 1
+        images.append(imageio.imread("out\\"+str(file)))
+    imageio.mimsave(f"out\\{footage}.webp", images, fps=fps)
 
 def grabInput():
-    print ("\n" * 100)
+    clear_console()
     print ("~ A simple GreenScreen Removing tool")
-    print ("~ Output wil be a PNG Sequence")
+    print ("~ Output wil be a .webp file")
     footage = input("Enter Filename with extention (Ex.Footage.mp4) \n: ")
     return footage
+
+def clear_files():
+    for file in [file for file in os.listdir("imgseq\\footage\\") if file.endswith('.png') or file.endswith('.png') or file.endswith('.txt')]:
+        os.remove("imgseq\\footage\\"+str(file))
+    for file in [file for file in os.listdir("out\\") if file.endswith('.png') or file.endswith('.png') or file.endswith('.txt')]:
+        os.remove("out\\"+str(file))
+
+def clear_console():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def start(footage):
     global length
     files = [f for f in os.listdir('.') if os.path.isfile(f)]
     if footage in files:
         frameCapture(footage,"footage") 
-        genOutput()
-        print ("\n" * 100)
-        print("\n"+length+" Files Generated successfully! Check the 'out' directory.")
+        genOutput(footage[:footage.find('.')])
+        clear_files()
+        clear_console()
+        print("\nFile Generated successfully! Check the 'out' directory.")
         print("\nPress Enter to Exit.")
         input("")
         quit()
     else:
-        print ("\n" * 100)
+        clear_console()
         print("File not found!! Press Enter to Try Again.")
         print("Remember to copy the file into this folder.")
         input("")
 
 if __name__ == '__main__': 
+    clear_files()
+    fps = 0
     done = False
     length = 0
     while not done:
