@@ -6,13 +6,14 @@ import os
 import sys
 import imageio.v2 as imageio
 
-def removeGreenScreen(infile,outfile, keyColor = None, tolerance = None):
+def removeGreenScreen(infile,outfile):
     #open files
+    global keyColor, tolerance
     inDataFG = Image.open(infile).convert('YCbCr')
     BG = Image.new('RGBA', inDataFG.size, (0, 0, 0, 0))
     #make sure values are set
     if keyColor == None:keyColor = inDataFG.getpixel((1,1))
-    if tolerance == None: tolerance = [50,130]
+    if tolerance == None: tolerance = [50,100]
     [Y_key, Cb_key, Cr_key] = keyColor
     [tola, tolb]= tolerance
     
@@ -150,6 +151,8 @@ if __name__ == '__main__':
     fps = 0
     done = False
     length = 0
+    keyColor = None
+    tolerance = None
     while not done:
         footage = grabInput()
         start(footage)
