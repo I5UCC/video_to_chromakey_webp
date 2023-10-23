@@ -109,3 +109,4 @@ t2.py
 *.mp4
 *.webp
 *.txt
+tmp/

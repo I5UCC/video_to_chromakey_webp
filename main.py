@@ -13,7 +13,7 @@ def removeGreenScreen(infile,outfile):
     BG = Image.new('RGBA', inDataFG.size, (0, 0, 0, 0))
     #make sure values are set
     if keyColor == None:keyColor = inDataFG.getpixel((1,1))
-    if tolerance == None: tolerance = [50,100]
+    if tolerance == None: tolerance = [50,130]
     [Y_key, Cb_key, Cr_key] = keyColor
     [tola, tolb]= tolerance
     
@@ -89,14 +89,14 @@ def frameCapture(path,type):
         fps = vidObj.get(cv2.CAP_PROP_FPS)
         width = vidObj.get(cv2.CAP_PROP_FRAME_WIDTH)   
         height = vidObj.get(cv2.CAP_PROP_FRAME_HEIGHT) 
-        writeLog("Frame Width : "+str(width)+"\nFrame Height : "+str(height)+"\nFrame Rate : "+str(fps),"out\\footageInfo.txt")
+        writeLog("Frame Width : "+str(width)+"\nFrame Height : "+str(height)+"\nFrame Rate : "+str(fps),"tmp\\footageInfo.txt")
         clear_console()
         while count < length: 
             # vidObj object calls read 
             # function extract frames 
             success, image = vidObj.read() 
             # Saves the frames with frame-count 
-            cv2.imwrite("imgseq\\"+ str(type) +"\\frame"+ str(count).zfill(6) +".png", image)
+            cv2.imwrite("tmp\\"+ str(type) +"\\frame"+ str(count).zfill(6) +".png", image)
             print_progress(count, (length-1), prefix='Creating Image Sequence', suffix="[ Frame : "+ str(count).zfill(6) +" ]", decimals=1, bar_length=50)
             count += 1
 
@@ -105,25 +105,41 @@ def genOutput(footage):
     count = 0
     clear_console()
     images = []
-    for file in [file for file in os.listdir("imgseq\\footage\\") if file.endswith('.png')]:
-        removeGreenScreen("imgseq\\footage\\"+str(file),"out\\"+str(file))
+    for file in [file for file in os.listdir("tmp\\footage\\") if file.endswith('.png')]:
+        removeGreenScreen("tmp\\footage\\"+str(file),"tmp\\"+str(file))
         print_progress(count, (length-1), prefix='Generating Frames', suffix="[ File : "+str(file)+" ]", decimals=1, bar_length=50)
         count += 1
-        images.append(imageio.imread("out\\"+str(file)))
+        images.append(imageio.imread("tmp\\"+str(file)))
     imageio.mimsave(f"out\\{footage}.webp", images, fps=fps)
 
 def grabInput():
     clear_console()
     print ("~ A simple GreenScreen Removing tool")
     print ("~ Output wil be a .webp file")
+    tolerance = input("Enter Tolerance (Ex. 50,130) \n: ")
+    if tolerance == "":
+        tolerance = [50,130]
+    else:
+        tolerance = tolerance.split(",")
+        tolerance = [int(tolerance[0]),int(tolerance[1])]
+
     footage = input("Enter Filename with extention (Ex.Footage.mp4) \n: ")
+    if footage == "":
+        footage = "footage.mp4"
     return footage
 
 def clear_files():
-    for file in [file for file in os.listdir("imgseq\\footage\\") if file.endswith('.png') or file.endswith('.png') or file.endswith('.txt')]:
-        os.remove("imgseq\\footage\\"+str(file))
-    for file in [file for file in os.listdir("out\\") if file.endswith('.png') or file.endswith('.png') or file.endswith('.txt')]:
-        os.remove("out\\"+str(file))
+    if not os.path.exists('tmp'):
+        os.makedirs('tmp')
+    if not os.path.exists('tmp\\footage'):
+        os.makedirs('tmp\\footage')
+    if not os.path.exists('out'):
+        os.makedirs('out')
+
+    for file in [file for file in os.listdir("tmp\\footage\\") if file.endswith('.png') or file.endswith('.png') or file.endswith('.txt')]:
+        os.remove("tmp\\footage\\"+str(file))
+    for file in [file for file in os.listdir("tmp\\") if file.endswith('.png') or file.endswith('.png') or file.endswith('.txt')]:
+        os.remove("tmp\\"+str(file))
 
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -137,9 +153,8 @@ def start(footage):
         clear_files()
         clear_console()
         print("\nFile Generated successfully! Check the 'out' directory.")
-        print("\nPress Enter to Exit.")
+        print("\nPress Enter to Continue.")
         input("")
-        quit()
     else:
         clear_console()
         print("File not found!! Press Enter to Try Again.")
